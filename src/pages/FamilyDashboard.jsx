@@ -190,12 +190,20 @@ export default function FamilyDashboard() {
         </div>
 
         {/* Quick links */}
-        <button
-          onClick={() => navigate('/medications')}
-          className="text-left text-base font-semibold text-brand-600 py-1"
-        >
-          Medications 💊
-        </button>
+        <div className="flex gap-6">
+          <button
+            onClick={() => navigate('/medications')}
+            className="text-base font-semibold text-brand-600 py-1"
+          >
+            Medications 💊
+          </button>
+          <button
+            onClick={() => navigate('/messages')}
+            className="text-base font-semibold text-brand-600 py-1"
+          >
+            Messages 💬
+          </button>
+        </div>
 
         {/* Error banner */}
         {error && (

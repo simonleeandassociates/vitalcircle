@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { AlertCircle, CheckCircle } from 'lucide-react'
@@ -88,6 +89,7 @@ function SuccessScreen({ onDone }) {
 
 export default function CheckInPage() {
   const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
 
   const [feelingScore, setFeelingScore]       = useState(null)
   const [medicationsTaken, setMedicationsTaken] = useState(null)
@@ -192,6 +194,22 @@ export default function CheckInPage() {
             onChange={e => setNotes(e.target.value)}
           />
           <p className="text-sm text-gray-400 text-right">{notes.length}/500</p>
+        </div>
+
+        {/* Quick links */}
+        <div className="flex gap-6 px-1">
+          <button
+            onClick={() => navigate('/medications')}
+            className="text-base font-semibold text-brand-600 py-1"
+          >
+            My Medications 💊
+          </button>
+          <button
+            onClick={() => navigate('/messages')}
+            className="text-base font-semibold text-brand-600 py-1"
+          >
+            Messages 💬
+          </button>
         </div>
 
         {/* Submit */}

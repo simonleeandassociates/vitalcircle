@@ -4,6 +4,7 @@ import AuthPage from './pages/AuthPage'
 import CheckInPage from './pages/CheckInPage'
 import FamilyDashboard from './pages/FamilyDashboard'
 import MedicationsPage from './pages/MedicationsPage'
+import MessagingPage from './pages/MessagingPage'
 
 function AppRoutes() {
   const { user, profile, loading } = useAuth()
@@ -32,6 +33,7 @@ function AppRoutes() {
       <Routes>
         <Route path="/checkin" element={<CheckInPage />} />
         <Route path="/medications" element={<MedicationsPage />} />
+        <Route path="/messages" element={<MessagingPage />} />
         <Route path="*" element={<Navigate to="/checkin" replace />} />
       </Routes>
     )
@@ -42,6 +44,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/family-dashboard" element={<FamilyDashboard />} />
       <Route path="/medications" element={<MedicationsPage />} />
+      <Route path="/messages" element={<MessagingPage />} />
       <Route path="*" element={<Navigate to="/family-dashboard" replace />} />
     </Routes>
   )
