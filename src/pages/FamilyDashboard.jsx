@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
@@ -140,6 +141,7 @@ function EmptyState() {
 
 export default function FamilyDashboard() {
   const { signOut } = useAuth()
+  const navigate    = useNavigate()
 
   const [checkin,   setCheckin]   = useState(undefined) // undefined = loading, null = none
   const [loading,   setLoading]   = useState(true)
@@ -186,6 +188,14 @@ export default function FamilyDashboard() {
             Sign out
           </button>
         </div>
+
+        {/* Quick links */}
+        <button
+          onClick={() => navigate('/medications')}
+          className="text-left text-base font-semibold text-brand-600 py-1"
+        >
+          Medications 💊
+        </button>
 
         {/* Error banner */}
         {error && (
