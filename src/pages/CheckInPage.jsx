@@ -106,14 +106,23 @@ export default function CheckInPage() {
     setError('')
     setLoading(true)
     try {
-      const { error: insertError } = await supabase.from('checkins').insert({
+      const { data, error: insertError } = await supabase.from('checkins').insert({
         user_id:          profile.id,
         feeling_score:    feelingScore,
         medications_taken: medicationsTaken ?? false,
         needs_help:       needsHelp ?? false,
         notes:            notes.trim() || null,
-      })
+      }).select().single()
       if (insertError) throw insertError
+
+      try {
+        await supabase.functions.invoke('send-checkin-notification', {
+          body: { checkin_id: data.id, user_id: profile.id },
+        })
+      } catch (notifErr) {
+        console.error('[VitalCircle] Notification failed:', notifErr)
+      }
+
       setSubmitted(true)
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')

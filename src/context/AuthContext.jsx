@@ -68,7 +68,11 @@ export function AuthProvider({ children }) {
 
   async function signUp({ email, password, name, role }) {
     if (!supabase) throw new Error('Supabase is not configured. Add credentials to .env.local')
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name: name.trim(), role } },
+    })
     if (error) throw error
 
     // Wait for the auth user to propagate before writing the public profile.
