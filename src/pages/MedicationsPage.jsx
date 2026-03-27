@@ -197,9 +197,10 @@ function AddMedForm({ onAdd }) {
 }
 
 export default function MedicationsPage() {
-  const { profile } = useAuth()
-  const navigate    = useNavigate()
-  const isSenior    = profile?.role === 'senior'
+  const { profile, groupStatus } = useAuth()
+  const navigate                 = useNavigate()
+  const isSenior                 = profile?.role === 'senior'
+  const groupId                  = groupStatus?.groupId ?? null
 
   const [meds,    setMeds]    = useState([])
   const [loading, setLoading] = useState(true)
@@ -227,7 +228,7 @@ export default function MedicationsPage() {
   async function handleAdd({ name, dosage, reminder_times }) {
     const { data, error: insertError } = await supabase
       .from('medications')
-      .insert({ name, dosage, reminder_times })
+      .insert({ name, dosage, reminder_times, group_id: groupId })
       .select()
       .single()
     if (insertError) throw insertError

@@ -4,9 +4,6 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { Send, AlertCircle } from 'lucide-react'
 
-// Placeholder group id used in dev mode (single group)
-const DEV_GROUP_ID = '00000000-0000-0000-0000-000000000000'
-
 function formatTime(isoString) {
   const date = new Date(isoString)
   const now  = new Date()
@@ -35,8 +32,9 @@ function Bubble({ message, isOwn }) {
 }
 
 export default function MessagingPage() {
-  const { profile }   = useAuth()
-  const navigate      = useNavigate()
+  const { profile, groupStatus } = useAuth()
+  const navigate                 = useNavigate()
+  const groupId                  = groupStatus?.groupId ?? null
   const isSenior      = profile?.role === 'senior'
   const backPath      = isSenior ? '/checkin' : '/family-dashboard'
 
@@ -136,7 +134,7 @@ export default function MessagingPage() {
       sender_role: profile.role,
       content,
       created_at:  new Date().toISOString(),
-      group_id:    DEV_GROUP_ID,
+      group_id:    groupId,
     }
     setMessages(prev => [...prev, optimistic])
     setTimeout(() => scrollToBottom('smooth'), 50)
@@ -144,7 +142,7 @@ export default function MessagingPage() {
     try {
       const { data, error: insertError } = await supabase
         .from('messages')
-        .insert({ sender_id: profile.id, content, group_id: DEV_GROUP_ID })
+        .insert({ sender_id: profile.id, content, group_id: groupId })
         .select()
         .single()
       if (insertError) throw insertError

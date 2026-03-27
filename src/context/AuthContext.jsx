@@ -1,12 +1,14 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { getUserGroupStatus } from '../utils/groupHelpers'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user,        setUser]        = useState(null)
+  const [profile,     setProfile]     = useState(null)
+  const [groupStatus, setGroupStatus] = useState(null)
+  const [loading,     setLoading]     = useState(true)
 
   useEffect(() => {
     if (!supabase) { setLoading(false); return }
@@ -22,12 +24,31 @@ export function AuthProvider({ children }) {
       if (session?.user) fetchProfile(session.user)
       else {
         setProfile(null)
+        setGroupStatus(null)
         setLoading(false)
       }
     })
 
     return () => subscription.unsubscribe()
   }, [])
+
+  async function fetchGroupStatus(userId) {
+    try {
+      const status = await getUserGroupStatus(userId)
+      setGroupStatus(status)
+    } catch (err) {
+      console.error('[VitalCircle] fetchGroupStatus error:', err)
+      setGroupStatus({ hasGroup: false, groupId: null, role: null, inviteCode: null, seniorName: null })
+    }
+  }
+
+  // Exposed so InviteCodeDisplay / JoinFamily can trigger a re-check after
+  // creating or joining a group. Fetches a fresh session to avoid stale closure.
+  async function refreshGroupStatus() {
+    if (!supabase) return
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session?.user) await fetchGroupStatus(session.user.id)
+  }
 
   async function fetchProfile(authUser) {
     const { data, error } = await supabase
@@ -38,19 +59,20 @@ export function AuthProvider({ children }) {
 
     if (data) {
       setProfile(data)
+      await fetchGroupStatus(authUser.id)
       setLoading(false)
       return
     }
 
-    // No profile row found (e.g. signup insert failed). Create a fallback row
-    // so the user is never stranded. Role defaults to 'senior'; they can change
-    // it later. We use upsert to avoid a duplicate-key error on repeated retries.
+    // No profile row found — create a fallback so the user is never stranded.
+    // Use role from auth metadata (set during sign-up) so family members aren't
+    // incorrectly treated as seniors.
     console.warn('[VitalCircle] No profile found for user, creating fallback row.', error)
     const fallback = {
-      id:   authUser.id,
+      id:    authUser.id,
       email: authUser.email,
-      name:  authUser.email.split('@')[0],
-      role: 'senior',
+      name:  authUser.user_metadata?.name ?? authUser.email.split('@')[0],
+      role:  authUser.user_metadata?.role ?? 'senior',
     }
     const { data: created, error: createError } = await supabase
       .from('users')
@@ -63,6 +85,7 @@ export function AuthProvider({ children }) {
     }
 
     setProfile(created ?? fallback)
+    await fetchGroupStatus(authUser.id)
     setLoading(false)
   }
 
@@ -75,7 +98,6 @@ export function AuthProvider({ children }) {
     })
     if (error) throw error
 
-    // Wait for the auth user to propagate before writing the public profile.
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     const MAX_ATTEMPTS = 3
@@ -117,7 +139,9 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider
+      value={{ user, profile, groupStatus, loading, signUp, signIn, signOut, refreshGroupStatus }}
+    >
       {children}
     </AuthContext.Provider>
   )

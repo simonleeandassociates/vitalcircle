@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import { AlertCircle, CheckCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, Copy, CheckCheck, ChevronDown, ChevronUp } from 'lucide-react'
 
 const FEELING_OPTIONS = [
   { score: 1, emoji: '😞', label: 'Rough' },
@@ -87,8 +87,53 @@ function SuccessScreen({ onDone }) {
   )
 }
 
+function InviteCodeBanner({ code }) {
+  const [open,   setOpen]   = useState(false)
+  const [copied, setCopied] = useState(false)
+
+  async function handleCopy() {
+    try { await navigator.clipboard.writeText(code) } catch { /* ignore */ }
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="card bg-blue-50 border-blue-100 flex flex-col gap-2">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center justify-between w-full text-left"
+      >
+        <span className="text-sm font-semibold text-blue-700">
+          👨‍👩‍👧 Share your invite code with family
+        </span>
+        {open
+          ? <ChevronUp className="w-4 h-4 text-blue-500 shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-blue-500 shrink-0" />
+        }
+      </button>
+      {open && (
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <span className="text-2xl font-bold tracking-[0.25em] text-brand-700 select-all">
+            {code}
+          </span>
+          <button
+            onClick={handleCopy}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all
+              ${copied
+                ? 'bg-green-100 text-green-700'
+                : 'bg-brand-600 text-white active:scale-95'}`}
+          >
+            {copied ? <CheckCheck className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CheckInPage() {
-  const { profile, signOut } = useAuth()
+  const { profile, groupStatus, signOut } = useAuth()
   const navigate = useNavigate()
 
   const [feelingScore, setFeelingScore]       = useState(null)
@@ -146,6 +191,10 @@ export default function CheckInPage() {
           </h1>
           <p className="text-lg text-gray-500 mt-1">How are you doing today?</p>
         </div>
+
+        {groupStatus?.inviteCode && (
+          <InviteCodeBanner code={groupStatus.inviteCode} />
+        )}
 
         <ErrorBanner message={error} />
 

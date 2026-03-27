@@ -4,8 +4,6 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import { CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
 
-const SENIOR_NAME = 'Simon Lee'
-
 const FEELING_MAP = {
   1: { emoji: '😞', label: 'Rough' },
   2: { emoji: '😕', label: 'Not great' },
@@ -52,7 +50,7 @@ function StatusCircle({ score }) {
   )
 }
 
-function CheckInCard({ checkin }) {
+function CheckInCard({ checkin, seniorName }) {
   const status  = getStatus(checkin.feeling_score)
   const feeling = FEELING_MAP[checkin.feeling_score] ?? { emoji: '❓', label: 'Unknown' }
 
@@ -62,7 +60,7 @@ function CheckInCard({ checkin }) {
       <div className="card flex items-center gap-5">
         <StatusCircle score={checkin.feeling_score} />
         <div className="flex flex-col gap-1 min-w-0">
-          <p className="text-xl font-bold text-gray-900">{SENIOR_NAME}</p>
+          <p className="text-xl font-bold text-gray-900">{seniorName}</p>
           <p className={`text-lg font-semibold ${status.text}`}>{status.label}</p>
           <p className="text-sm text-gray-400">{formatTime(checkin.created_at)}</p>
         </div>
@@ -119,7 +117,7 @@ function CheckInCard({ checkin }) {
       {/* Notes */}
       {checkin.notes && (
         <div className="card bg-warm-100 border-warm-200 flex flex-col gap-2">
-          <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Note from {SENIOR_NAME.split(' ')[0]}</p>
+          <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Note from {seniorName.split(' ')[0]}</p>
           <p className="text-base text-gray-800 leading-relaxed">"{checkin.notes}"</p>
         </div>
       )}
@@ -127,21 +125,22 @@ function CheckInCard({ checkin }) {
   )
 }
 
-function EmptyState() {
+function EmptyState({ seniorName }) {
   return (
     <div className="card bg-gray-50 border-gray-100 flex flex-col items-center gap-3 py-10 text-center">
       <span className="text-5xl">🕐</span>
       <p className="text-xl font-semibold text-gray-700">No check-ins yet</p>
       <p className="text-base text-gray-400">
-        {SENIOR_NAME.split(' ')[0]} hasn't checked in today
+        {seniorName.split(' ')[0]} hasn't checked in today
       </p>
     </div>
   )
 }
 
 export default function FamilyDashboard() {
-  const { signOut } = useAuth()
-  const navigate    = useNavigate()
+  const { signOut, groupStatus } = useAuth()
+  const navigate                 = useNavigate()
+  const seniorName               = groupStatus?.seniorName ?? 'Your senior'
 
   const [checkin,   setCheckin]   = useState(undefined) // undefined = loading, null = none
   const [loading,   setLoading]   = useState(true)
@@ -220,9 +219,9 @@ export default function FamilyDashboard() {
             <p className="text-gray-400 text-base">Loading check-in…</p>
           </div>
         ) : checkin ? (
-          <CheckInCard checkin={checkin} />
+          <CheckInCard checkin={checkin} seniorName={seniorName} />
         ) : (
-          <EmptyState />
+          <EmptyState seniorName={seniorName} />
         )}
 
         {/* Refresh */}
